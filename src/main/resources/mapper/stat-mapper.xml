@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kh.eco.stats.model.dao.StatMapper">
+
+    <!-- 1. 랜딩 페이지 통계 -->
+    <select id="selectLandingStats" resultType="map">
+        SELECT 
+            (SELECT COUNT(*) FROM TB_MEMBER WHERE STATUS = 'Y') AS "memberCount",
+            (SELECT COUNT(*) FROM TB_BOARD WHERE STATUS = 'Y') AS "totalPosts",
+            (
+                (SELECT COUNT(*) FROM TB_BOARD WHERE STATUS = 'Y') +
+                (SELECT COUNT(*) FROM TB_COMMENT WHERE STATUS = 'Y') +
+                (SELECT COUNT(*) FROM TB_BOARD_LIKE)
+            ) AS "ecoActions",
+            (SELECT ROUND(COUNT(*) * 0.5) FROM TB_BOARD WHERE STATUS = 'Y') AS "treeEffect"
+        FROM DUAL
+    </select>
+    
+    <!-- 2. 관리자 대시보드 통계 -->
+    <select id="selectDashboardStats" resultType="map">
+        SELECT 
+            (SELECT COUNT(*) 
+                FROM TB_MEMBER 
+              WHERE TRUNC(ENROLL_DATE) = TRUNC(SYSDATE)) AS "newUsers",
+
+            (
+                (SELECT COUNT(*) FROM TB_BOARD WHERE TRUNC(REG_DATE) = TRUNC(SYSDATE) AND STATUS = 'Y') +
+                (SELECT COUNT(*) FROM TB_COMMENT WHERE TRUNC(REG_DATE) = TRUNC(SYSDATE) AND STATUS = 'Y')
+            ) AS "todayTraffic",
+
+            (
+                (SELECT COUNT(*) * 100 FROM TB_BOARD WHERE TRUNC(REG_DATE) = TRUNC(SYSDATE) AND STATUS = 'Y') +
+                (SELECT COUNT(*) * 10 FROM TB_COMMENT WHERE TRUNC(REG_DATE) = TRUNC(SYSDATE) AND STATUS = 'Y')
+            ) AS "todayPointIssued",
+
+            NVL((SELECT SUM(MEMBER_POINT)
+                    FROM TB_MEMBER 
+                  WHERE STATUS = 'Y'), 0) AS "totalPointSum"
+        FROM DUAL
+    </select>
+    
+    <!-- 3. 메인 페이지 통계 -->
+    <select id="selectMainpage" resultType="map">
+				WITH TODAY_DATA AS (
+				  SELECT TRUNC(SYSDATE) AS today FROM DUAL
+				),
+				NEW_USERS AS (
+				  SELECT COUNT(*) AS cnt
+				  FROM TB_MEMBER
+				  WHERE TRUNC(ENROLL_DATE) = (SELECT today FROM TODAY_DATA)
+				),
+				TODAY_BOARD AS (
+				  SELECT COUNT(*) AS cnt
+				  FROM TB_BOARD
+				  WHERE TRUNC(REG_DATE) = (SELECT today FROM TODAY_DATA)
+				    AND STATUS = 'Y'
+				),
+				TODAY_COMMENT AS (
+				  SELECT COUNT(*) AS cnt
+				  FROM TB_COMMENT
+				  WHERE TRUNC(REG_DATE) = (SELECT today FROM TODAY_DATA)
+				    AND STATUS = 'Y'
+				),
+				TOTAL_POINTS AS (
+				  SELECT NVL(SUM(MEMBER_POINT), 0) AS total
+				  FROM TB_MEMBER
+				  WHERE STATUS = 'Y'
+				)
+				SELECT
+				  (SELECT cnt FROM NEW_USERS) AS newUsers,
+				  (SELECT cnt FROM TODAY_BOARD) + (SELECT cnt FROM TODAY_COMMENT) AS todayTraffic,
+				  (SELECT cnt FROM TODAY_BOARD) * 100 + (SELECT cnt FROM TODAY_COMMENT) * 10 AS todayPointIssued,
+				  (SELECT total FROM TOTAL_POINTS) AS totalPointSum
+				FROM DUAL;
+    </select>
+
+
+
+	<select id="todayParticipants" resultType="int">
+  SELECT 
+         COUNT(*)
+    FROM 
+         TB_BOARD
+   WHERE 
+         STATUS = 'Y'
+     AND 
+         BOARD_CATEGORY = #{category}
+     AND 
+         TRUNC(REG_DATE) = TRUNC(SYSDATE)
+    </select>
+	
+	<select id="todayPost" resultType="int">
+		SELECT 
+		       COUNT(*)
+		  FROM 
+		       TB_BOARD
+		 WHERE
+		       STATUS = 'Y'
+		   AND
+		       BOARD_CATEGORY LIKE #{category}
+		   AND
+		       TRUNC(REG_DATE) = TRUNC(SYSDATE)         
+	</select>
+</mapper>

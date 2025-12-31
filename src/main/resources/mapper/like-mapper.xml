@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kh.eco.like.model.dao.LikeMapper">
+
+	<!-- 게시글 존재 여부 -->
+	<select id="existsBoard" resultType="int">
+		SELECT
+		       COUNT(*)
+		  FROM
+		       TB_BOARD
+		 WHERE
+		       BOARD_NO = #{boardNo}
+		   AND
+		       STATUS = 'Y'               
+	</select>
+	
+	
+	<!-- 좋아요 개수 행 존재 여부-->
+	<select id="existsLikeCountRow" resultType="int">
+		SELECT
+		       COUNT(*)
+		  FROM
+		       TB_LIKE_COUNT
+		 WHERE
+		       REF_NO = #{boardNo}
+		   AND
+		       REF_TYPE = 'BOARD'               
+	</select>
+	
+    <!-- 좋아요 개수 행 새로 추가하기 -->
+    <insert id="insertLikeCountRow">
+		INSERT
+		  INTO
+		       TB_LIKE_COUNT
+		       (
+		       REF_NO
+		     , REF_TYPE
+		     , LIKE_COUNT  
+		       )
+		VALUES
+		       (
+		       #{boardNo}
+		     , 'BOARD'
+		     , DEFAULT  
+		       )              
+	</insert>
+    
+	<!-- 좋아요 여부 -->
+	<select id="existsBoardLike" resultType="int">
+		SELECT
+			   COUNT(*)
+	      FROM
+	           TB_BOARD_LIKE
+	     WHERE
+	           REF_MNO = #{memberNo}
+	       AND
+	           REF_BNO = #{boardNo}
+	       AND
+	           STATUS = 'Y'              		   
+	</select>
+
+	<!-- 좋아요 추가 -->
+	<insert id="insertBoardLike">
+		INSERT
+		  INTO
+		       TB_BOARD_LIKE
+		       (
+		       REF_MNO
+		     , REF_BNO
+		     , REG_DATE
+		     , STATUS
+		       )
+		VALUES
+		       (
+		       #{memberNo}
+		     , #{boardNo}
+		     , SYSDATE
+		     , DEFAULT
+		       )      
+	</insert>
+	
+	<!-- 좋아요 증가 -->
+	<update id="increaseBoardLikeCount">
+	    UPDATE
+	           TB_LIKE_COUNT
+	       SET
+	           LIKE_COUNT = LIKE_COUNT + 1
+	     WHERE
+	           REF_NO = #{boardNo}
+	       AND
+	           REF_TYPE = 'BOARD'                  
+	</update>
+	
+	<!-- 좋아요 취소 -->
+	<delete id="deleteBoardLike">
+		DELETE
+		       TB_BOARD_LIKE
+		 WHERE
+		       REF_BNO = #{boardNo}
+		   AND
+		       REF_MNO = #{memberNo}          
+	</delete>
+	
+	<!-- 좋아요 감소 -->
+	<update id="decreaseBoardLikeCount">
+	    UPDATE
+	           TB_LIKE_COUNT
+	       SET
+	           LIKE_COUNT = LIKE_COUNT - 1
+	     WHERE
+	           REF_NO = #{boardNo}
+	       AND
+	           REF_TYPE = 'BOARD'                  
+	</update>
+	
+	<!-- 총 좋아요 개수 -->
+	<select id="getBoardLikeCount" resultType="int">
+		SELECT
+		       NVL(LIKE_COUNT, 0)
+		  FROM
+		       TB_LIKE_COUNT
+		 WHERE
+		       REF_NO = #{boardNo}
+		   AND
+		       REF_TYPE = 'BOARD'         
+	</select>
+	
+	
+	
+	
+	
+	<!-- 여기부터 COMMENT_LIKE 기능에 대한 SQL문입니다. -->
+	<!-- 댓글 좋아요 중복체크 -->
+	<select id="existsCommentLike" resultType="int">
+		SELECT
+			   COUNT(*)
+	      FROM
+	           TB_COMMENT_LIKE
+	     WHERE
+	           REF_MNO = #{memberNo}
+	       AND
+	           REF_CNO = #{commentNo}
+	       AND
+	           STATUS = 'Y'              		   
+	</select>
+	
+	<!-- 댓글_좋아요 행 존재 여부 -->
+	<select id="existsCommentLikeRow" resultType="int">
+		SELECT
+		       COUNT(*)
+		  FROM
+		       TB_LIKE_COUNT
+		 WHERE
+		       REF_NO = #{commentNo}
+		   AND
+		       REF_TYPE = 'COMMENT'
+	</select>
+	
+	<!-- 댓글_좋아요 행 추가 -->
+	<insert id="insertCommentLikeRow">
+		INSERT
+		  INTO
+		       TB_LIKE_COUNT
+		       (
+		       REF_NO
+		     , REF_TYPE
+		     , LIKE_COUNT  
+		       )
+		VALUES
+		       (
+		       #{commentNo}
+		     , 'COMMENT'
+		     , DEFAULT  
+		       )              
+	</insert>
+	
+	<!-- 댓글 좋아요 추가 -->
+	<insert id="insertCommentLike">
+		INSERT
+		  INTO
+		       TB_COMMENT_LIKE
+		       (
+		       REF_MNO
+		     , REF_CNO
+		     , REG_DATE
+		     , STATUS
+		       )
+		VALUES
+		       (
+		       #{memberNo}
+		     , #{commentNo}
+		     , SYSDATE
+		     , DEFAULT
+		       )      
+	</insert>
+	
+	<!-- 댓글 좋아요 증가 -->
+	<update id="increaseCommentLikeCount">
+	    UPDATE
+	           TB_LIKE_COUNT
+	       SET
+	           LIKE_COUNT = LIKE_COUNT + 1
+	     WHERE
+	           REF_NO = #{commentNo}
+	       AND
+	           REF_TYPE = 'COMMENT'                  
+	</update>
+	
+	<!-- 댓글 좋아요 취소 -->
+	<delete id="deleteCommentLike">
+		DELETE
+		       TB_COMMENT_LIKE
+		 WHERE
+		       REF_CNO = #{commentNo}
+		   AND
+		       REF_MNO = #{memberNo}          
+	</delete>
+	
+	<!-- 댓글 좋아요 감소 -->
+	<update id="decreaseCommentLikeCount">
+	    UPDATE
+	           TB_LIKE_COUNT
+	       SET
+	           LIKE_COUNT = LIKE_COUNT - 1
+	     WHERE
+	           REF_NO = #{commentNo}
+	       AND
+	           REF_TYPE = 'COMMENT'                  
+	</update>
+	
+	<!-- 댓글 총 좋아요 개수 -->
+	<select id="getCommentLikeCount" resultType="int">
+		SELECT
+		       NVL(LIKE_COUNT, 0)
+		  FROM
+		       TB_LIKE_COUNT
+		 WHERE
+		       REF_NO = #{commentNo}
+		   AND
+		       REF_TYPE = 'COMMENT'         
+	</select>
+	
+	
+	
+</mapper>  

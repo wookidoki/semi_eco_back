@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kh.eco.bookmark.model.dao.BookmarkMapper">
+	
+	<!-- 북마크 행 존재 여부 -->
+	<select id="existsBookmark" resultType="int">
+		SELECT
+		       COUNT(*)
+		  FROM
+		       TB_BOOKMARK
+		 WHERE
+		       REF_MNO = #{memberNo}
+		   AND
+		       REF_BNO = #{boardNo}
+		   AND
+		       STATUS = 'Y'                     
+	</select>
+	
+	<!-- 북마크 추가 -->
+	<insert id="insertBookmark" parameterType="BookmarkDTO">
+		INSERT
+		  INTO
+		       TB_BOOKMARK
+		       (
+		       REF_MNO
+		     , REF_BNO
+		     , REG_DATE
+		     , STATUS
+		       )
+		VALUES
+		       (
+		       #{memberNo}
+		     , #{boardNo}
+		     , SYSDATE
+		     , DEFAULT  
+		       )      
+	</insert>
+	
+	<!-- 북마크 중복 여부 -->
+	<select id="isBookmarked" resultType="int">
+		SELECT
+		       COUNT(1)
+		  FROM
+		       TB_BOOKMARK
+		 WHERE
+		       REF_MNO = #{memberNo}
+		   AND
+		       REF_BNO = #{boardNo}
+		   AND
+		       STATUS = 'Y'                    
+	</select>
+	
+	<!-- 즐겨찾기 취소 -->
+	<delete id="cancleBookmark" parameterType="BookmarkDTO">
+		DELETE
+		       TB_BOOKMARK
+		 WHERE
+		       REF_MNO = #{memberNo}
+		   AND
+		       REF_BNO = #{boardNo}
+		   AND
+		       STATUS = 'Y'                   
+	</delete>
+	
+	
+</mapper>

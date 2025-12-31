@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kh.eco.member.model.dao.MemberMapper">
+	
+	<sql id="countMember">
+		SELECT 
+		       COUNT(*)
+		  FROM 
+		       TB_MEMBER 
+		 WHERE 
+	</sql>
+	
+	<insert id="signUp"
+			parameterType="MemberVO">
+		INSERT
+		  INTO
+		       TB_MEMBER (
+		           MEMBER_NO
+		         , MEMBER_NAME
+		         , MEMBER_ID
+		         , MEMBER_PWD
+		         , PHONE
+		         , EMAIL
+		         , REF_RNO
+		         , MEMBER_IMAGE
+		         , MEMBER_POINT
+		         , ENROLL_DATE
+		         , STATUS
+		         , ROLE
+		       )
+		VALUES
+		       (
+		       SEQ_MNO.NEXTVAL
+		     , #{memberName}
+		     , #{memberId}
+		     , #{memberPwd}
+		     , #{phone}
+		     , #{email}
+		     , #{refRno}
+		     , DEFAULT
+		     , DEFAULT
+		     , DEFAULT
+		     , DEFAULT
+		     , DEFAULT
+		       )
+	</insert>
+	
+	<select id="countByMemberId" parameterType="string">
+		<include refid="countMember" />
+		    MEMBER_ID = #{memberId}
+	</select>
+	
+	<select id="countByPhone" parameterType="string">
+    	<include refid="countMember" />
+    		   PHONE = #{phone}
+	</select>
+
+	<select id="countByEmail" parameterType="string">
+		<include refid="countMember" />
+		       EMAIL = #{email}
+	</select>
+
+	
+	<select id="loadUser" parameterType="MemberLoginDTO">
+		SELECT
+			   MEMBER_ID memberId
+		     , MEMBER_PWD memberPwd
+			 , MEMBER_NAME memberName
+		     , ROLE
+		     , MEMBER_NO memberNo
+		     , PHONE
+		     , EMAIL
+		     , REF_RNO refRno
+		     , MEMBER_IMAGE memberImage
+		     , MEMBER_POINT memberPoint
+		     , ENROLL_DATE enrollDate
+		     , STATUS status
+		  FROM
+			   TB_MEMBER
+		 WHERE
+			   MEMBER_ID = #{memberId}
+	</select>
+	
+	<!-- 비밀번호 변경 -->
+	<update id="changePassword" parameterType="map">
+		UPDATE
+		 		TB_MEMBER
+		   SET
+		   		MEMBER_PWD = #{newPassword}
+		 WHERE
+		        MEMBER_ID = #{memberId}
+	</update>
+	
+	
+	<!-- 아이디 조회 -->
+	<select id="findById" resultType= "MemberVo">
+		SELECT
+			   MEMBER_NAME memberName
+			 , MEMBER_ID memberId
+			 , MEMBER_PWD memberPwd
+			 , PHONE
+			 , EMAIL
+			 , REF_RNO refRno
+			 , MEMBER_IMAGE memberImage
+	      FROM
+	           TB_MEMBER
+	     WHERE
+	           MEMBER_ID = #{memberId}
+		
+	</select>
+	
+	<!-- 이메일 조회 -->
+	<select id="findByEmail" resultType="MemberVo">
+		SELECT
+		       MEMBER_NO memberNo
+			 , MEMBER_NAME memberName
+			 , MEMBER_ID memberId
+			 , MEMBER_PWD memberPwd
+			 , PHONE
+			 , EMAIL
+			 , REF_RNO refRno
+			 , MEMBER_IMAGE memberImage
+			 , MEMBER_POINT memberPoint
+			 , ENROLL_DATE enrollDate
+			 , STATUS
+			 , ROLE
+	      FROM
+	           TB_MEMBER
+		 WHERE
+		       EMAIL = #{email}
+	</select>
+	
+	<!-- 이메일 변경 -->
+	<update id="updateEmail">
+		UPDATE 
+			   TB_MEMBER
+		   SET 
+		       EMAIL = #{newEmail}
+		 WHERE
+		       MEMBER_ID = #{memberId}
+		
+	</update>
+	
+	<!-- 번호 조회 -->
+	<select id="findByPhone" resultType="MemberVO">
+		SELECT
+		       MEMBER_NO memberNo
+			 , MEMBER_NAME memberName
+			 , MEMBER_ID memberId
+			 , MEMBER_PWD memberPwd
+			 , PHONE
+			 , EMAIL
+			 , REF_RNO refRno
+			 , MEMBER_IMAGE memberImage
+			 , MEMBER_POINT memberPoint
+			 , ENROLL_DATE enrollDate
+			 , STATUS
+			 , ROLE
+	      FROM
+	           TB_MEMBER
+	     WHERE
+	           PHONE = #{phone}
+	</select>
+	
+	<!-- 번호 변경 -->
+	<update id="updatePhone">
+		UPDATE
+			   TB_MEMBER
+		   SET
+		       PHONE = #{newPhone}
+		 WHERE
+		       MEMBER_ID = #{memberId}
+		       
+	</update>
+	
+	<!-- 프로필 변경 -->
+	<update id="updateProfile" parameterType="com.kh.eco.member.model.dto.UpdateProfileDTO">
+        UPDATE 
+        	   TB_MEMBER
+           SET 
+               MEMBER_IMAGE = #{imagePath}
+         WHERE 
+          	   MEMBER_ID = #{memberId}
+    </update>
+    
+	<!-- 지역 번호 변경 -->
+	<update id="updateRegion">
+		UPDATE
+			   TB_MEMBER
+	       SET
+	           REF_RNO = #{newRegion}
+	     WHERE 
+	  		   MEMBER_ID = #{memberId}
+	</update>
+	
+	<select id="selectMyPosts" resultType="FeedBoardDTO">
+	    <![CDATA[
+	    SELECT *
+	    FROM (
+	        SELECT 
+	            A.*,
+	            ROWNUM AS RNUM
+	        FROM (
+	            SELECT 
+	                B.BOARD_NO as boardNo,
+	                B.BOARD_TITLE as boardTitle,
+	                B.BOARD_CONTENT as boardContent,
+	                B.BOARD_CATEGORY as boardCategory,
+	                C.CATEGORY_NAME as categoryName,
+	                B.REF_MNO as boardAuthor,
+	                M.MEMBER_ID as memberId,
+	                M.MEMBER_IMAGE as memberImage,
+	                A.ATTACHMENT_PATH as attachmentPath,
+	                M.REF_RNO as regionNo,
+	                R.REGION_NAME as regionName,
+	                B.REG_DATE as regDate,
+	                (SELECT COUNT(*) FROM TB_BOARD_LIKE WHERE REF_BNO = B.BOARD_NO AND STATUS = 'Y') as likeCount
+	            FROM TB_BOARD B
+	            LEFT JOIN TB_MEMBER M ON B.REF_MNO = M.MEMBER_NO
+	            LEFT JOIN TB_CATEGORY C ON B.BOARD_CATEGORY = C.CATEGORY_NO
+	            LEFT JOIN TB_REGION R ON M.REF_RNO = R.REGION_NO
+	            LEFT JOIN TB_ATTACHMENT A ON B.BOARD_NO = A.REF_BNO AND A.STATUS = 'Y'
+	            WHERE B.REF_MNO = #{memberNo}
+	              AND B.STATUS = 'Y'
+	            ORDER BY B.REG_DATE DESC
+	        ) A
+	        WHERE ROWNUM <= (#{offset} + #{limit})
+	    )
+	    WHERE RNUM > #{offset}
+	    ]]>
+	</select>
+	
+	<select id="countMyPosts" resultType="int">
+		SELECT
+		       COUNT(*)
+		  FROM
+		       TB_BOARD
+		 WHERE
+		       REF_MNO = #{memberNo}
+	</select>
+	
+	<select id="selectMyComments" resultType="CommentDTO">
+	    SELECT 
+	        C.COMMENT_NO as commentNo,
+	        C.COMMENT_CONTENT as commentContent,
+	        C.REF_BNO as refBno,
+	        C.REG_DATE as regDate,
+	        C.REF_MNO as refMno
+	    FROM TB_COMMENT C
+	    WHERE C.REF_MNO = #{memberNo} 
+	      AND C.STATUS = 'Y'
+	    ORDER BY C.REG_DATE DESC
+	    LIMIT #{limit} OFFSET #{offset}
+	</select>
+	
+	<select id="countMyComments" resultType="int">
+		SELECT
+		       COUNT(*)
+		  FROM
+		       TB_COMMENT
+		 WHERE
+		       REF_MNO = #{memberNo}		
+	</select>
+	
+    <select id="selectMyLikes" resultType="FeedBoardDTO">
+	    <![CDATA[
+	    SELECT *
+	    FROM (
+	        SELECT
+	            A.*,
+	            ROWNUM AS RNUM
+	        FROM (
+	            SELECT 
+	                B.BOARD_NO as boardNo,
+	                B.BOARD_TITLE as boardTitle,
+	                B.BOARD_CONTENT as boardContent,
+	                B.BOARD_CATEGORY as boardCategory,
+	                C.CATEGORY_NAME as categoryName,
+	                B.REF_MNO as boardAuthor,
+	                M.MEMBER_ID as memberId,
+	                M.MEMBER_IMAGE as memberImage,
+	                A.ATTACHMENT_PATH as attachmentPath,
+	                M.REF_RNO as regionNo,
+	                R.REGION_NAME as regionName,
+	                B.REG_DATE as regDate,
+	                (SELECT COUNT(*) FROM TB_BOARD_LIKE WHERE REF_BNO = B.BOARD_NO AND STATUS = 'Y') as likeCount
+	            FROM TB_BOARD B
+	            JOIN TB_BOARD_LIKE L ON B.BOARD_NO = L.REF_BNO AND L.STATUS = 'Y'
+	            LEFT JOIN TB_MEMBER M ON B.REF_MNO = M.MEMBER_NO
+	            LEFT JOIN TB_CATEGORY C ON B.BOARD_CATEGORY = C.CATEGORY_NO
+	            LEFT JOIN TB_REGION R ON M.REF_RNO = R.REGION_NO
+	            LEFT JOIN TB_ATTACHMENT A ON B.BOARD_NO = A.REF_BNO AND A.STATUS = 'Y'
+	            WHERE L.REF_MNO = #{memberNo}
+	              AND B.STATUS = 'Y'
+	            ORDER BY L.REG_DATE DESC
+	        ) A
+	        WHERE ROWNUM <= (#{offset} + #{limit})
+	    )
+	    WHERE RNUM > #{offset}
+	    ]]>
+	</select>
+    
+	<select id="countMyLikes" resultType="int">
+        SELECT 
+        	   COUNT(*)
+          FROM 
+          	   TB_BOARD_LIKE
+         WHERE 
+               REF_MNO = #{memberNo}
+    </select>
+	
+	<select id="selectMyBookmarks" resultType="FeedBoardDTO">
+	    <![CDATA[
+	    SELECT *
+	    FROM (
+	        SELECT
+	            A.*,
+	            ROWNUM AS RNUM
+	        FROM (
+	            SELECT 
+	                B.BOARD_NO as boardNo,
+	                B.BOARD_TITLE as boardTitle,
+	                B.BOARD_CONTENT as boardContent,
+	                B.BOARD_CATEGORY as boardCategory,
+	                C.CATEGORY_NAME as categoryName,
+	                B.REF_MNO as boardAuthor,
+	                M.MEMBER_ID as memberId,
+	                M.MEMBER_IMAGE as memberImage,
+	                A.ATTACHMENT_PATH as attachmentPath,
+	                M.REF_RNO as regionNo,
+	                R.REGION_NAME as regionName,
+	                B.REG_DATE as regDate,
+	                (SELECT COUNT(*) FROM TB_BOARD_LIKE WHERE REF_BNO = B.BOARD_NO AND STATUS = 'Y') as likeCount
+	            FROM TB_BOARD B
+	            JOIN TB_BOOKMARK BM ON B.BOARD_NO = BM.REF_BNO AND BM.STATUS = 'Y'
+	            LEFT JOIN TB_MEMBER M ON B.REF_MNO = M.MEMBER_NO
+	            LEFT JOIN TB_CATEGORY C ON B.BOARD_CATEGORY = C.CATEGORY_NO
+	            LEFT JOIN TB_REGION R ON M.REF_RNO = R.REGION_NO
+	            LEFT JOIN TB_ATTACHMENT A ON B.BOARD_NO = A.REF_BNO AND A.STATUS = 'Y'
+	            WHERE BM.REF_MNO = #{memberNo}
+	              AND B.STATUS = 'Y'
+	            ORDER BY BM.REG_DATE DESC
+	        ) A
+	        WHERE ROWNUM <= (#{offset} + #{limit})
+	    )
+	    WHERE RNUM > #{offset}
+	    ]]>
+	</select>
+	
+	<select id="countMyBookmarks" resultType="int">
+        SELECT 
+        	   COUNT(*)
+          FROM 
+          	   TB_BOOKMARK
+         WHERE 
+               REF_MNO = #{memberNo}
+    </select>	
+	
+	<select id="getActiveMemberCount" resultType="long">
+		<include refid="countMember" />
+               STATUS = 'Y'
+    </select>
+    
+<select id="getMemberRank" resultType="map">
+    SELECT
+        ROWNUM as rank,
+        A.MEMBER_ID as memberId,
+        A.MEMBER_POINT as memberPoint
+    FROM (
+        SELECT MEMBER_ID, MEMBER_POINT
+        FROM TB_MEMBER
+        WHERE STATUS = 'Y'
+        ORDER BY MEMBER_POINT DESC
+    ) A
+    WHERE ROWNUM &lt;= 10
+</select>
+</mapper>

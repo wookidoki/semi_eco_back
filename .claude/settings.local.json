@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(if exist \"C:\\\\Kdt_edu_leeseongwook\\\\semi-project-BE\\\\eco\\\\src\\\\main\\\\java\\\\com\\\\kh\\\\eco\\\\file\\\\FileService.java\" del /f \"C:\\\\Kdt_edu_leeseongwook\\\\semi-project-BE\\\\eco\\\\src\\\\main\\\\java\\\\com\\\\kh\\\\eco\\\\file\\\\FileService.java\")",
+      "Bash(if exist \"C:\\\\Kdt_edu_leeseongwook\\\\semi-project-BE\\\\eco\\\\src\\\\main\\\\java\\\\com\\\\kh\\\\eco\\\\common\\\\dto\\\\ApiResponse.java\" del /f \"C:\\\\Kdt_edu_leeseongwook\\\\semi-project-BE\\\\eco\\\\src\\\\main\\\\java\\\\com\\\\kh\\\\eco\\\\common\\\\dto\\\\ApiResponse.java\")",
+      "Bash(if exist \"C:\\\\Kdt_edu_leeseongwook\\\\semi-project-BE\\\\eco\\\\src\\\\main\\\\java\\\\com\\\\kh\\\\eco\\\\common\\\\constant\\\\ResponseData.java\" del /f \"C:\\\\Kdt_edu_leeseongwook\\\\semi-project-BE\\\\eco\\\\src\\\\main\\\\java\\\\com\\\\kh\\\\eco\\\\common\\\\constant\\\\ResponseData.java\")",
+      "Bash(powershell:*)",
+      "Bash(gradlew.bat build:*)",
+      "Bash(./gradlew build:*)"
+    ]
+  }
+}

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kh.eco.admin.model.dao.AdminCommentMapper">
+	
+	<sql id="findAdminCommentDTO">
+		SELECT
+       		   C.COMMENT_NO commentNo
+     		 , C.COMMENT_CONTENT commentContent
+     		 , C.REG_DATE regDate
+     		 , C.STATUS status
+     		 , COUNT(CASE WHEN CR.STATUS = 'Y' THEN 1 END) AS commentReportCount
+     		 , M.MEMBER_ID memberId
+  		  FROM 
+       		   TB_COMMENT C
+  		  JOIN 
+       		   TB_MEMBER M ON C.REF_MNO = M.MEMBER_NO
+  		  LEFT 
+  		  JOIN 
+       		   TB_COMMENT_REPORT CR ON CR.REF_CNO = C.COMMENT_NO
+	</sql>
+	
+	<sql id="groupByAdminCommentDTO">
+ 		 GROUP 
+    		BY
+       		   C.COMMENT_NO
+       		 , C.COMMENT_CONTENT
+       		 , C.REG_DATE
+       		 , C.STATUS
+       		 , M.MEMBER_ID		
+	</sql>	
+	
+	
+	<select id="findCommentAll" resultType="AdminCommentDTO">
+		<include refid="findAdminCommentDTO" />
+		<include refid="groupByAdminCommentDTO" />
+ 		 ORDER
+    		BY 
+    		   C.COMMENT_NO DESC
+	</select>
+	
+	
+	<select id="findReportedComment" parameterType="AdminCommentDTO">
+		<include refid="findAdminCommentDTO" />
+		<include refid="groupByAdminCommentDTO" />
+		HAVING
+       		   COUNT(CASE WHEN CR.STATUS = 'Y' THEN 1 END) > 0
+ 		 ORDER
+   			BY 
+	   		   C.COMMENT_NO DESC
+	</select>
+	
+	
+	<select id="selectComment" resultType="AdminCommentDTO">
+		 <include refid="findAdminCommentDTO" />
+ 		 WHERE
+       		   C.COMMENT_NO = #{commentNo}
+ 	     <include refid="groupByAdminCommentDTO" />
+	</select>
+	
+    
+    <select id="countComments" resultType="int">
+		SELECT
+		       COUNT(*)
+		  FROM
+		       TB_COMMENT
+	</select>
+	
+	
+	<select id="countReportedComments" resultType="int">
+		SELECT 
+       		   COUNT(DISTINCT REF_CNO)
+  		  FROM 
+       		   TB_COMMENT_REPORT
+ 		 WHERE 
+       		   STATUS = 'Y'
+	</select>
+	
+	<update id="deleteComment">
+		UPDATE
+       		   TB_COMMENT
+   		   SET
+       		   STATUS = 'N'
+ 		 WHERE
+       		   COMMENT_NO = #{commentNo}
+	</update>
+	
+	<update id="restoreComment">
+		UPDATE
+       		   TB_COMMENT
+   		   SET
+       		   STATUS = 'Y'
+ 		 WHERE
+       		   COMMENT_NO = #{commentNo}		
+	</update>
+	
+	<select id="selectReport">
+        SELECT 
+        	   COUNT(*)
+          FROM 
+               TB_COMMENT_REPORT
+         WHERE
+               REF_CNO = #{commentNo}
+           AND
+               STATUS = 'Y'
+	</select>
+	
+	<update id="handleReport">
+		UPDATE 
+       		   TB_COMMENT_REPORT
+   		   SET
+       		   STATUS = 'N'
+ 		 WHERE
+      		   REF_CNO = #{commentNo}
+   		   AND
+       		   STATUS = 'Y'
+	</update>
+	
+</mapper>

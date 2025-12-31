@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kh.eco.admin.model.dao.AdminNoticeMapper">
+
+    <resultMap id="adminBoardResultMap" type="com.kh.eco.admin.model.dto.AdminBoardDTO">
+        <id property="boardNo" column="BOARD_NO"/>
+        <result property="boardTitle" column="BOARD_TITLE"/>
+        <result property="boardContent" column="BOARD_CONTENT"/>
+        <result property="memberName" column="MEMBER_NAME"/>
+        <result property="regDate" column="REG_DATE"/>
+        <result property="viewCount" column="VIEW_COUNT"/>
+        <result property="categoryName" column="CATEGORY_NAME"/>
+        <result property="status" column="STATUS"/>
+        <result property="boardCategory" column="BOARD_CATEGORY"/>
+    </resultMap>
+
+    <resultMap id="attachmentResultMap" type="com.kh.eco.admin.model.dto.AttachmentDTO">
+        <id property="fileNo" column="FILE_NO"/>
+        <result property="originalFileName" column="ORIGINAL_FILE_NAME"/>
+        <result property="modifiedFileName" column="MODIFIED_FILE_NAME"/>
+        <result property="attachmentPath" column="ATTACHMENT_PATH"/>
+        <result property="status" column="STATUS"/>
+    </resultMap>
+    
+    <select id="selectNoticeList" resultMap="adminBoardResultMap">
+        SELECT 
+               B.BOARD_NO
+             , B.BOARD_TITLE
+             , M.MEMBER_NAME
+             , B.REG_DATE
+             , B.VIEW_COUNT
+             , C.CATEGORY_NAME
+             , B.STATUS
+          FROM 
+               TB_BOARD B
+          LEFT
+          JOIN 
+               TB_MEMBER M ON B.REF_MNO = M.MEMBER_NO
+          LEFT
+          JOIN 
+               TB_CATEGORY C ON B.BOARD_CATEGORY = C.CATEGORY_NO
+         WHERE 
+               B.STATUS = 'Y'
+           AND 
+               B.BOARD_CATEGORY LIKE 'A%'
+         ORDER 
+               BY B.BOARD_NO DESC
+    </select>
+
+    <select id="countNotices" resultType="_int">
+        SELECT 
+               COUNT(*)
+          FROM 
+               TB_BOARD
+         WHERE 
+               STATUS = 'Y'
+           AND 
+               BOARD_CATEGORY LIKE 'A%'
+    </select>
+
+    <insert id="insertNotice">
+        <selectKey keyProperty="boardNo" resultType="long" order="BEFORE">
+            SELECT 
+                   SEQ_BNO.NEXTVAL 
+              FROM 
+                   DUAL
+        </selectKey>
+        INSERT INTO TB_BOARD (
+            BOARD_NO, REF_MNO, BOARD_CATEGORY, BOARD_TITLE, BOARD_CONTENT, REG_DATE, STATUS
+        ) VALUES (
+            #{boardNo}, #{refMno}, #{boardCategory}, #{boardTitle}, #{boardContent}, SYSDATE, 'Y'
+        )
+    </insert>
+
+    <insert id="insertAttachment">
+        INSERT INTO TB_ATTACHMENT (
+            FILE_NO, REF_BNO, ORIGINAL_FILE_NAME, MODIFIED_FILE_NAME, ATTACHMENT_PATH, STATUS
+        ) VALUES (
+            SEQ_FNO.NEXTVAL, 
+            #{refBno}, #{originalFileName}, #{modifiedFileName}, #{attachmentPath}, 'Y'
+        )
+    </insert>
+
+    <select id="selectNotice" resultMap="adminBoardResultMap">
+        SELECT 
+               B.BOARD_NO
+             , B.BOARD_TITLE
+             , B.BOARD_CONTENT
+             , M.MEMBER_NAME
+             , B.REG_DATE
+             , B.VIEW_COUNT
+             , C.CATEGORY_NAME
+             , B.STATUS
+             , B.BOARD_CATEGORY
+          FROM 
+               TB_BOARD B
+          LEFT
+          JOIN 
+               TB_MEMBER M ON B.REF_MNO = M.MEMBER_NO
+          LEFT
+          JOIN 
+               TB_CATEGORY C ON B.BOARD_CATEGORY = C.CATEGORY_NO
+         WHERE 
+               B.BOARD_NO = #{boardNo}
+    </select>
+    
+    <select id="selectAttachments" resultMap="attachmentResultMap">
+        SELECT 
+               FILE_NO 
+             , ORIGINAL_FILE_NAME 
+             , MODIFIED_FILE_NAME 
+             , ATTACHMENT_PATH
+          FROM 
+               TB_ATTACHMENT
+         WHERE 
+               REF_BNO = #{boardNo}
+           AND 
+               STATUS = 'Y'
+    </select>
+
+    <update id="updateNotice">
+        UPDATE 
+               TB_BOARD
+           SET 
+               BOARD_TITLE = #{boardTitle}
+             , BOARD_CONTENT = #{boardContent}
+             , BOARD_CATEGORY = #{boardCategory}
+         WHERE 
+               BOARD_NO = #{boardNo}
+    </update>
+
+    <update id="deleteNotice">
+        UPDATE 
+        	   TB_BOARD
+           SET 
+               STATUS = 'N'
+         WHERE 
+               BOARD_NO = #{boardNo}
+    </update>
+    
+    <update id="deleteAttachments">
+        UPDATE 
+               TB_ATTACHMENT
+           SET 
+               STATUS = 'N'
+         WHERE 
+               REF_BNO = #{boardNo}
+    </update>
+
+</mapper>

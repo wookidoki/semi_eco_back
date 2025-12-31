@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kh.eco.board.model.dao.FeedMapper">
+
+	<select id="selectFeedList" resultType="com.kh.eco.board.model.dto.FeedBoardDTO">
+    SELECT *
+    FROM (
+        SELECT
+           	    B.BOARD_NO       boardNo
+             ,  B.BOARD_TITLE    boardTitle
+             ,  B.BOARD_CONTENT  boardContent
+             ,  B.BOARD_CATEGORY boardCategory
+             ,  C.CATEGORY_NAME  categoryName
+             ,  B.REF_MNO        boardAuthor
+             ,  M.MEMBER_ID      memberId
+             ,  M.MEMBER_IMAGE   memberImage
+             ,  A.ATTACHMENT_PATH attachmentPath
+             ,  R.REGION_NO      regionNo
+             ,  R.REGION_NAME    regionName
+             ,  B.REG_DATE       regDate
+             , NVL(L.LIKE_COUNT, 0) likeCount
+             , ROW_NUMBER() OVER (ORDER BY B.BOARD_NO DESC) RN
+          FROM TB_BOARD B
+          JOIN TB_MEMBER M
+            ON B.REF_MNO = M.MEMBER_NO
+          JOIN TB_CATEGORY C
+            ON B.BOARD_CATEGORY = C.CATEGORY_NO
+          LEFT JOIN TB_REGION R
+            ON M.REF_RNO = R.REGION_NO
+          LEFT JOIN (
+               SELECT
+		              REF_BNO
+		            , MIN(ATTACHMENT_PATH) AS ATTACHMENT_PATH
+                 FROM TB_ATTACHMENT
+                WHERE STATUS = 'Y'
+                GROUP
+                   BY REF_BNO
+		         ) A
+		           ON A.REF_BNO = B.BOARD_NO
+		
+		       
+		         LEFT JOIN TB_LIKE_COUNT L
+		           ON L.REF_NO = B.BOARD_NO
+		
+		        WHERE B.STATUS = 'Y'
+		          AND B.BOARD_CATEGORY LIKE #{category}
+		        <if test="fetchOffset != null">
+		          AND B.BOARD_NO &lt; #{fetchOffset}
+		        </if>
+		    )
+		        WHERE RN &lt;= #{limit}
+</select>
+
+	<insert id="insertFeed" parameterType="BoardVO">
+		<selectKey keyProperty="boardNo" resultType="long" order="BEFORE">
+            SELECT SEQ_BNO.NEXTVAL FROM DUAL
+        </selectKey>
+
+		INSERT
+		  INTO
+		       TB_BOARD 
+		       (
+		       BOARD_NO
+		     , REF_MNO
+		     , BOARD_CATEGORY
+		     , BOARD_TITLE
+		     , BOARD_CONTENT
+		     , REG_DATE
+		     , STATUS  
+		       )
+		VALUES
+		       (
+		       #{boardNo}
+		     , #{refMno}
+		     , #{boardCategory}
+		     , #{boardTitle}
+		     , #{boardContent}
+		     , SYSDATE
+		     , 'Y'  
+		       )             
+	</insert>
+	
+	<select id="findNewBoardNo" resultType="BoardVO">
+		SELECT
+		       BOARD_NO boardNo
+		  FROM
+		       TB_BOARD
+		 WHERE
+		       REF_MNO = #{refMno}
+		 ORDER
+		    BY
+		       BOARD_NO DESC
+		 FETCH
+		 FIRST 1 ROW ONLY                        	
+	</select>
+	
+	
+	
+	<insert id="saveAttachment" parameterType="map">
+       	INSERT INTO TB_ATTACHMENT
+        (
+            FILE_NO,
+            REF_BNO,
+            ORIGINAL_FILE_NAME,
+            MODIFIED_FILE_NAME,
+            ATTACHMENT_PATH,
+            REG_DATE,
+            STATUS
+        )
+        VALUES
+        (
+            SEQ_FNO.NEXTVAL,
+            #{refBno},
+            #{originName},   
+            #{changeName},  
+            #{attachmentPath}, 
+            SYSDATE,
+            'Y'
+        )
+    </insert>
+    
+    <!-- 피드 수정하기 -->
+    <update id="updateFeed" parameterType="FeedBoardDTO"> 
+		UPDATE
+		       TB_BOARD
+		   SET
+		       BOARD_TITLE = #{boardTitle}
+		     , BOARD_CONTENT = #{boardContent}
+		     , BOARD_CATEGORY = #{boardCategory}
+		 WHERE
+		       BOARD_NO = #{boardNo}
+		   AND
+		       REF_MNO = #{boardAuthor}
+		   AND
+		       STATUS = 'Y'     
+	</update>
+	
+	<delete id="deleteAttachment">
+		DELETE
+		       TB_ATTACHMENT
+		 WHERE
+		       REF_BNO = #{boardNo}
+	</delete>
+    
+    <!-- 9. 첨부파일 수정 -->
+    <update id="updateAttachment" parameterType="map">
+        UPDATE TB_ATTACHMENT
+           SET ATTACHMENT_PATH = #{attachmentPath}
+             , ORIGINAL_FILE_NAME = #{originName} 
+             , MODIFIED_FILE_NAME = #{changeName} 
+             , REG_DATE = SYSDATE               
+         WHERE REF_BNO = #{refBno}
+           AND STATUS = 'Y'
+    </update>
+	
+	
+	
+	<sql id="countBoard">
+		SELECT 
+		       COUNT(*)
+		  FROM 
+		       TB_BOARD 
+		 WHERE 
+	</sql>
+	
+	<update id="deleteFeed" parameterType="int">
+		UPDATE
+		       TB_BOARD
+		   SET
+		       STATUS = 'N'
+		 WHERE
+		       BOARD_NO = #{boardNo}
+		   AND
+		       STATUS = 'Y'                    
+	</update>
+	
+	<select id="isOwner" resultType="int">
+		SELECT
+		       COUNT(1)
+		  FROM
+		       TB_BOARD
+		 WHERE
+		       BOARD_NO = #{boardNo}
+		   AND
+		       REF_MNO = #{memberNo}
+		   AND
+		       STATUS = 'Y'                    
+	</select>
+	
+	<select id="selectPopularFeed"
+        resultType="FeedBoardDTO">
+    SELECT *
+    FROM (
+        SELECT
+                B.BOARD_NO       AS boardNo
+             ,  B.BOARD_TITLE    AS boardTitle
+             ,  B.BOARD_CONTENT  AS boardContent
+             ,  B.BOARD_CATEGORY AS boardCategory
+             ,  C.CATEGORY_NAME  AS categoryName
+             ,  B.REF_MNO        AS boardAuthor
+             ,  M.MEMBER_ID      AS memberId
+             ,  M.MEMBER_IMAGE   AS memberImage
+             ,  A.ATTACHMENT_PATH AS attachmentPath
+             ,  R.REGION_NO      AS regionNo
+             ,  R.REGION_NAME    AS regionName
+             ,  B.REG_DATE       AS regDate
+             ,  NVL(L.LIKE_COUNT, 0) AS likeCount
+             ,  ROW_NUMBER() OVER (ORDER BY B.BOARD_NO DESC) AS RN
+        FROM TB_BOARD B
+        JOIN TB_MEMBER M
+          ON B.REF_MNO = M.MEMBER_NO
+        JOIN TB_CATEGORY C
+          ON B.BOARD_CATEGORY = C.CATEGORY_NO
+        LEFT JOIN TB_REGION R
+          ON M.REF_RNO = R.REGION_NO
+        LEFT JOIN (
+             SELECT
+                    REF_BNO
+                  , MIN(ATTACHMENT_PATH) AS ATTACHMENT_PATH
+               FROM TB_ATTACHMENT
+              WHERE STATUS = 'Y'
+              GROUP BY REF_BNO
+           ) A
+           ON A.REF_BNO = B.BOARD_NO
+        LEFT JOIN TB_LIKE_COUNT L
+           ON L.REF_NO  = B.BOARD_NO
+          AND L.REF_TYPE = 'BOARD'
+        WHERE B.STATUS = 'Y'
+          AND B.BOARD_CATEGORY LIKE #{category}
+          -- 좋아요 100개 이상인 게시글만
+          AND NVL(L.LIKE_COUNT, 0) &gt;= 100
+        <if test="fetchOffset != null">
+          AND B.BOARD_NO &lt; #{fetchOffset}
+        </if>
+    )
+    WHERE RN &lt;= #{limit}
+</select>
+
+
+	
+</mapper>  
